@@ -1,4 +1,4 @@
-# AI Builders 2025 : CodeSentinel | AI CWE Classification
+# AI Builders 2025 : CodeSentinel | CWE Classifier for C/C++
 
 ## Overview:
 CodeSentinel is an AI-based system designed to automatically detect and classify software vulnerabilities in C and C++ code using the Common Weakness Enumeration (CWE) standard. By utilizing Machine Learning (ML) and Natural Language Processing (NLP) techniques, this project aims to automate the identification of common security vulnerabilities in source code, significantly reducing the time and effort required for manual analysis.
