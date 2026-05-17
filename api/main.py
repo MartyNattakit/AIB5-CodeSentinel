@@ -124,13 +124,6 @@ class ErrorResponse(BaseModel):
     detail:  Optional[str]
 
 
-# ── Routes ────────────────────────────────────────────────────────────────────
-
-@app.get("/", include_in_schema=False)
-async def root():
-    return {"message": "CodeSentinel API v0.1 — POST /classify to classify input."}
-
-
 @app.get("/health", response_model=HealthResponse)
 async def health():
     """Health check — returns model load status."""
