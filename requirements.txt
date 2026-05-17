@@ -1,0 +1,16 @@
+# API
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+pydantic==2.9.2
+
+# ML
+torch==2.4.1
+transformers==4.46.0
+peft==0.13.0
+bitsandbytes==0.44.1
+accelerate==1.0.1
+datasets==3.0.1
+sentence-transformers==3.1.1
+
+# Utils
+huggingface_hub==0.25.2

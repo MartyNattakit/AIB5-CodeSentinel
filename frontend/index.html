@@ -1,0 +1,855 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CodeSentinel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:        #0a0a0f;
+      --surface:   #111118;
+      --border:    #1e1e2e;
+      --accent:    #00ff9d;
+      --accent2:   #ff4d6d;
+      --amber:     #ffb347;
+      --text:      #e8e8f0;
+      --muted:     #6b6b80;
+      --mono:      'Space Mono', monospace;
+      --sans:      'DM Sans', sans-serif;
+
+      --sev-critical: #ff4d6d;
+      --sev-high:     #ff7043;
+      --sev-medium:   #ffb347;
+      --sev-low:      #00ff9d;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* ── Noise overlay ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.4;
+    }
+
+    /* ── Grid lines ── */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,255,157,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,255,157,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      position: relative;
+      z-index: 10;
+      padding: 2rem 2.5rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    .logo {
+      display: flex;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .logo-mark {
+      font-family: var(--mono);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+    }
+
+    .logo-sub {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+
+    .badge {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 0.25rem 0.6rem;
+      letter-spacing: 0.1em;
+    }
+
+    /* ── Main layout ── */
+    main {
+      position: relative;
+      z-index: 10;
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0;
+      max-width: 1400px;
+      margin: 0 auto;
+      width: 100%;
+      padding: 2.5rem;
+      gap: 2rem;
+    }
+
+    /* ── Input panel ── */
+    .input-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      animation: fadeUp 0.5s 0.1s ease both;
+    }
+
+    .panel-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .panel-label::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+    }
+
+    textarea {
+      flex: 1;
+      min-height: 420px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      line-height: 1.7;
+      padding: 1.25rem;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.2s;
+      caret-color: var(--accent);
+    }
+
+    textarea::placeholder { color: var(--muted); }
+
+    textarea:focus {
+      border-color: rgba(0,255,157,0.3);
+      box-shadow: 0 0 0 1px rgba(0,255,157,0.1) inset;
+    }
+
+    .input-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .char-count {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+
+    .classify-btn {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: var(--bg);
+      background: var(--accent);
+      border: none;
+      padding: 0.75rem 2rem;
+      cursor: pointer;
+      transition: all 0.15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .classify-btn:hover {
+      background: #00e68a;
+      transform: translateY(-1px);
+    }
+
+    .classify-btn:active { transform: translateY(0); }
+
+    .classify-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .classify-btn.loading::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: -100%;
+      width: 100%;
+      height: 2px;
+      background: rgba(0,0,0,0.3);
+      animation: progress 1.5s linear infinite;
+    }
+
+    /* ── Output panel ── */
+    .output-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      animation: fadeUp 0.5s 0.2s ease both;
+    }
+
+    .output-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* Empty state */
+    .empty-state {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 3rem;
+      text-align: center;
+    }
+
+    .empty-icon {
+      font-size: 2rem;
+      opacity: 0.2;
+    }
+
+    .empty-text {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      line-height: 1.8;
+    }
+
+    /* Result state */
+    .result {
+      display: none;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .result.visible { display: flex; }
+
+    /* CWE header block */
+    .cwe-header {
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .cwe-id {
+      font-family: var(--mono);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.02em;
+      line-height: 1;
+    }
+
+    .cwe-name {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+      font-weight: 300;
+    }
+
+    .severity-badge {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      padding: 0.3rem 0.7rem;
+      border: 1px solid currentColor;
+      white-space: nowrap;
+      margin-top: 0.2rem;
+    }
+
+    .severity-CRITICAL { color: var(--sev-critical); }
+    .severity-HIGH     { color: var(--sev-high); }
+    .severity-MEDIUM   { color: var(--sev-medium); }
+    .severity-LOW      { color: var(--sev-low); }
+
+    /* Confidence bar */
+    .confidence-row {
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .conf-label {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      white-space: nowrap;
+    }
+
+    .conf-bar-track {
+      flex: 1;
+      height: 3px;
+      background: var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .conf-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 0%;
+    }
+
+    .conf-value {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--text);
+      min-width: 3rem;
+      text-align: right;
+    }
+
+    /* Description */
+    .description-block {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .block-label {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 0.6rem;
+    }
+
+    .description-text {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: var(--text);
+      font-weight: 300;
+    }
+
+    /* Alternatives */
+    .alternatives-block {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .alt-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+
+    .alt-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .alt-cwe {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--muted);
+      min-width: 6rem;
+    }
+
+    .alt-bar-track {
+      flex: 1;
+      height: 2px;
+      background: var(--border);
+    }
+
+    .alt-bar-fill {
+      height: 100%;
+      background: var(--muted);
+      transition: width 0.6s 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      width: 0%;
+    }
+
+    .alt-score {
+      font-family: var(--mono);
+      font-size: 0.65rem;
+      color: var(--muted);
+      min-width: 3rem;
+      text-align: right;
+    }
+
+    /* ATLAS block */
+    .atlas-block {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border);
+      border-left: 2px solid var(--accent2);
+      display: none;
+    }
+
+    .atlas-block.visible { display: block; }
+
+    .atlas-id {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--accent2);
+      margin-bottom: 0.3rem;
+    }
+
+    .atlas-technique {
+      font-size: 0.9rem;
+      font-weight: 500;
+      margin-bottom: 0.5rem;
+    }
+
+    .atlas-reasoning {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    .atlas-conf {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--accent2);
+      letter-spacing: 0.1em;
+      margin-top: 0.5rem;
+    }
+
+    /* Warning */
+    .warning-block {
+      padding: 0.75rem 1.5rem;
+      background: rgba(255,179,71,0.06);
+      border-left: 2px solid var(--amber);
+      display: none;
+      margin: 0;
+    }
+
+    .warning-block.visible { display: block; }
+
+    .warning-text {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--amber);
+      line-height: 1.6;
+    }
+
+    /* Input type tag */
+    .meta-row {
+      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: auto;
+    }
+
+    .meta-tag {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      border: 1px solid var(--border);
+      padding: 0.2rem 0.5rem;
+    }
+
+    .meta-time {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    /* Error state */
+    .error-block {
+      padding: 1.5rem;
+      display: none;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .error-block.visible { display: flex; }
+
+    .error-title {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      color: var(--accent2);
+    }
+
+    .error-msg {
+      font-size: 0.8rem;
+      color: var(--muted);
+    }
+
+    /* ── Footer ── */
+    footer {
+      position: relative;
+      z-index: 10;
+      padding: 1rem 2.5rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .footer-note {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .footer-links a {
+      font-family: var(--mono);
+      font-size: 0.6rem;
+      color: var(--muted);
+      text-decoration: none;
+      letter-spacing: 0.08em;
+      transition: color 0.15s;
+    }
+
+    .footer-links a:hover { color: var(--accent); }
+
+    /* ── Animations ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes progress {
+      from { left: -100%; }
+      to   { left: 100%; }
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    .scanning {
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      animation: pulse 1.2s ease infinite;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      main {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+      }
+      textarea { min-height: 280px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <span class="logo-mark">CodeSentinel</span>
+    <span class="logo-sub">v0.1</span>
+  </div>
+  <span class="badge">CWE · ATLAS · AI/ML</span>
+</header>
+
+<main>
+  <!-- Input -->
+  <div class="input-panel">
+    <div class="panel-label">Input — paste code, CVE description, or bug report</div>
+    <textarea
+      id="input"
+      placeholder="# Paste anything here&#10;def get_user(name):&#10;    return db.execute('SELECT * FROM users WHERE name=' + name)&#10;&#10;# or a CVE description:&#10;# The login form passes user input directly into SQL queries without sanitization..."
+      spellcheck="false"
+    ></textarea>
+    <div class="input-meta">
+      <span class="char-count" id="charCount">0 / 8000</span>
+      <button class="classify-btn" id="classifyBtn" onclick="classify()">
+        CLASSIFY →
+      </button>
+    </div>
+  </div>
+
+  <!-- Output -->
+  <div class="output-panel">
+    <div class="panel-label">Analysis</div>
+    <div class="output-card">
+
+      <!-- Empty state -->
+      <div class="empty-state" id="emptyState">
+        <div class="empty-icon">⬡</div>
+        <div class="empty-text">
+          AWAITING INPUT<br/>
+          paste code or vulnerability description<br/>
+          and hit classify
+        </div>
+      </div>
+
+      <!-- Scanning state -->
+      <div class="scanning" id="scanningState" style="display:none;">
+        ▶ SCANNING INPUT...
+      </div>
+
+      <!-- Error state -->
+      <div class="error-block" id="errorBlock">
+        <div class="error-title">⚠ CLASSIFICATION FAILED</div>
+        <div class="error-msg" id="errorMsg"></div>
+      </div>
+
+      <!-- Result -->
+      <div class="result" id="resultBlock">
+
+        <div class="cwe-header">
+          <div>
+            <div class="cwe-id" id="cweId">—</div>
+            <div class="cwe-name" id="cweName">—</div>
+          </div>
+          <div class="severity-badge" id="severityBadge">—</div>
+        </div>
+
+        <div class="confidence-row">
+          <span class="conf-label">CONFIDENCE</span>
+          <div class="conf-bar-track">
+            <div class="conf-bar-fill" id="confBar"></div>
+          </div>
+          <span class="conf-value" id="confValue">—</span>
+        </div>
+
+        <div class="description-block">
+          <div class="block-label">Description</div>
+          <div class="description-text" id="descText">—</div>
+        </div>
+
+        <div class="alternatives-block">
+          <div class="block-label">Alternatives</div>
+          <div class="alt-list" id="altList"></div>
+        </div>
+
+        <div class="atlas-block" id="atlasBlock">
+          <div class="block-label">ATLAS Match</div>
+          <div class="atlas-id" id="atlasId">—</div>
+          <div class="atlas-technique" id="atlasTechnique">—</div>
+          <div class="atlas-reasoning" id="atlasReasoning">—</div>
+          <div class="atlas-conf" id="atlasConf">—</div>
+        </div>
+
+        <div class="warning-block" id="warningBlock">
+          <div class="warning-text" id="warningText">—</div>
+        </div>
+
+        <div class="meta-row">
+          <span class="meta-tag" id="inputTypeTag">—</span>
+          <span class="meta-time" id="metaTime">—</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer>
+  <span class="footer-note">CWE Top 25 · MITRE ATLAS · RoBERTa + Qwen2.5-Coder</span>
+  <div class="footer-links">
+    <a href="https://github.com/martynattakit/AIB5-CodeSentinel" target="_blank">GitHub</a>
+    <a href="https://huggingface.co/martynattakit" target="_blank">HF Hub</a>
+    <a href="https://atlas.mitre.org" target="_blank">MITRE ATLAS</a>
+  </div>
+</footer>
+
+<script>
+  // ── Config ──────────────────────────────────────────────────────────────────
+  // Update this to your API URL when deployed on HF Spaces
+  const API_BASE = window.location.origin;
+
+  // ── Char counter ────────────────────────────────────────────────────────────
+  const input = document.getElementById('input');
+  const charCount = document.getElementById('charCount');
+
+  input.addEventListener('input', () => {
+    const n = input.value.length;
+    charCount.textContent = `${n.toLocaleString()} / 8000`;
+    charCount.style.color = n > 7000 ? 'var(--accent2)' : 'var(--muted)';
+  });
+
+  // ── Keyboard shortcut: Cmd/Ctrl+Enter ───────────────────────────────────────
+  input.addEventListener('keydown', e => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') classify();
+  });
+
+  // ── State helpers ────────────────────────────────────────────────────────────
+  function showState(state) {
+    document.getElementById('emptyState').style.display   = state === 'empty'    ? 'flex' : 'none';
+    document.getElementById('scanningState').style.display = state === 'scanning' ? 'block' : 'none';
+    document.getElementById('errorBlock').classList.toggle('visible', state === 'error');
+    document.getElementById('resultBlock').classList.toggle('visible', state === 'result');
+  }
+
+  // ── Classify ─────────────────────────────────────────────────────────────────
+  async function classify() {
+    const text = input.value.trim();
+    if (!text) return;
+
+    const btn = document.getElementById('classifyBtn');
+    btn.disabled = true;
+    btn.classList.add('loading');
+    btn.textContent = 'SCANNING...';
+    showState('scanning');
+
+    try {
+      const res = await fetch(`${API_BASE}/classify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ input: text }),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(err.detail || 'Classification failed');
+      }
+
+      const data = await res.json();
+      renderResult(data);
+
+    } catch (err) {
+      document.getElementById('errorMsg').textContent = err.message;
+      showState('error');
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove('loading');
+      btn.textContent = 'CLASSIFY →';
+    }
+  }
+
+  // ── Render result ────────────────────────────────────────────────────────────
+  function renderResult(d) {
+    // CWE header
+    document.getElementById('cweId').textContent   = d.cwe_id;
+    document.getElementById('cweName').textContent = d.cwe_name;
+
+    const sevBadge = document.getElementById('severityBadge');
+    sevBadge.textContent  = d.severity;
+    sevBadge.className    = `severity-badge severity-${d.severity}`;
+
+    // Confidence bar — animate after paint
+    const confBar = document.getElementById('confBar');
+    const pct = Math.round(d.confidence * 100);
+    document.getElementById('confValue').textContent = `${pct}%`;
+    confBar.style.width = '0%';
+    requestAnimationFrame(() => {
+      setTimeout(() => { confBar.style.width = `${pct}%`; }, 50);
+    });
+
+    // Description
+    document.getElementById('descText').textContent = d.description;
+
+    // Alternatives
+    const altList = document.getElementById('altList');
+    altList.innerHTML = '';
+    (d.alternatives || []).forEach(alt => {
+      const pct = Math.round(alt.confidence * 100);
+      const item = document.createElement('div');
+      item.className = 'alt-item';
+      item.innerHTML = `
+        <span class="alt-cwe">${alt.cwe_id}</span>
+        <div class="alt-bar-track">
+          <div class="alt-bar-fill" style="width:0%" data-target="${pct}"></div>
+        </div>
+        <span class="alt-score">${pct}%</span>
+      `;
+      altList.appendChild(item);
+    });
+    // Animate alt bars
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        document.querySelectorAll('.alt-bar-fill').forEach(el => {
+          el.style.width = el.dataset.target + '%';
+        });
+      }, 100);
+    });
+
+    // ATLAS
+    const atlasBlock = document.getElementById('atlasBlock');
+    if (d.atlas_match) {
+      atlasBlock.classList.add('visible');
+      document.getElementById('atlasId').textContent        = d.atlas_match.atlas_id;
+      document.getElementById('atlasTechnique').textContent = d.atlas_match.technique;
+      document.getElementById('atlasReasoning').textContent = d.atlas_match.reasoning;
+      document.getElementById('atlasConf').textContent      = `CONFIDENCE: ${d.atlas_match.confidence}`;
+    } else {
+      atlasBlock.classList.remove('visible');
+    }
+
+    // Warning
+    const warnBlock = document.getElementById('warningBlock');
+    if (d.warning) {
+      warnBlock.classList.add('visible');
+      document.getElementById('warningText').textContent = `⚠ ${d.warning}`;
+    } else {
+      warnBlock.classList.remove('visible');
+    }
+
+    // Meta
+    document.getElementById('inputTypeTag').textContent = `INPUT: ${d.input_type.toUpperCase()}`;
+    document.getElementById('metaTime').textContent     = `${d.elapsed_s}s`;
+
+    showState('result');
+  }
+</script>
+</body>
+</html>
