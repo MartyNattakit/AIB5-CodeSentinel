@@ -108,9 +108,9 @@ class ATLASMatcher:
                 break
 
         # Build reasoning string
+        signals_str = ", ".join(f'"{s}"' for s in matched_signals[:5])
         reasoning = (
-            f"Matched {best_score} signal(s) from the input: "
-            f"{', '.join(f'\"{s}\"' for s in matched_signals[:5])}. "
+            f"Matched {best_score} signal(s) from the input: {signals_str}. "
             f"This pattern is consistent with {case['technique']} "
             f"({case['atlas_id']}) under the {case['tactic']} tactic."
         )
