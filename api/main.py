@@ -74,7 +74,7 @@ class ClassifyRequest(BaseModel):
 
 class CWEPrediction(BaseModel):
     cwe_id:      str
-    cwe_name:    str
+    description: str
     severity:    str
     confidence:  float
 
@@ -171,7 +171,12 @@ async def classify(request: ClassifyRequest):
 
     # Build alternatives list
     alternatives = [
-        CWEPrediction(**alt) for alt in result.get("alternatives", [])
+        CWEPrediction(
+            cwe_id=alt["cwe_id"],
+            description=alt["description"],
+            severity=alt["severity"],
+            confidence=alt["confidence"],
+        ) for alt in result.get("alternatives", [])
     ]
 
     # Build ATLAS match if present
